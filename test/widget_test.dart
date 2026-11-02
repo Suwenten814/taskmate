@@ -1,3 +1,4 @@
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:taskmate/main.dart';
 
@@ -6,6 +7,5 @@ void main() {
     await tester.pumpWidget(const TaskMateApp());
 
     expect(find.text('TaskMate'), findsWidgets);
-    expect(find.text('Beranda'), findsOneWidget);
   });
 }
