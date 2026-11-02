@@ -1,17 +1,66 @@
-# taskmate
+# TaskMate – Aplikasi Manajemen Tugas Mahasiswa
 
-A new Flutter project.
+TaskMate adalah aplikasi mobile berbasis Flutter yang dirancang untuk membantu mahasiswa mengelola tugas kuliah, memantau tenggat waktu, dan melihat progres penyelesaian tugas.
 
-## Getting Started
+## Tujuan Aplikasi
 
-This project is a starting point for a Flutter application.
+Membantu mahasiswa mengatur tugas perkuliahan agar lebih terstruktur dan mudah dipantau.
 
-A few resources to get you started if this is your first Flutter project:
+## Fitur Aplikasi
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+- Dashboard ringkasan tugas.
+- Menampilkan daftar tugas kuliah.
+- Menambahkan tugas baru.
+- Menandai tugas sebagai selesai.
+- Menghapus tugas dengan konfirmasi.
+- Melihat progres penyelesaian tugas.
+- Navigasi antarhalaman.
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Teknologi yang Digunakan
+
+- Flutter
+- Dart
+- Visual Studio Code
+- Android Emulator
+- Git dan GitHub
+
+## Struktur Folder
+
+```text
+lib/
+├── main.dart
+├── models/
+│   └── task_item.dart
+├── screens/
+│   └── dashboard_screen.dart
+└── widgets/
+    └── task_widgets.dart
+```
+
+## Cara Menjalankan Aplikasi
+
+1. Clone repository:
+
+   `git clone https://github.com/Suwenten814/taskmate.git`
+
+2. Masuk ke folder proyek:
+
+   `cd taskmate`
+
+3. Instal dependencies:
+
+   `flutter pub get`
+
+4. Jalankan aplikasi:
+
+   `flutter run`
+
+## Repository GitHub
+
+https://github.com/Suwenten814/taskmate
+
+## Status Pengembangan
+
+Proyek ini dikembangkan secara bertahap sebagai bagian dari tugas Ujian Tengah Semester Pemrograman Mobile.
+
+Fitur dan struktur aplikasi akan terus dikembangkan sesuai kebutuhan tugas.
