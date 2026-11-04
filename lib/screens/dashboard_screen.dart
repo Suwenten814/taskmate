@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../models/task_item.dart';
 import '../widgets/task_widgets.dart';
+import '../services/task_storage.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -139,6 +140,60 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
   }
 
+  Future<void> editTask(TaskItem task) async {
+    final titleController = TextEditingController(text: task.title);
+    final subjectController = TextEditingController(text: task.subject);
+
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Edit Tugas'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: titleController,
+                decoration: const InputDecoration(labelText: 'Nama Tugas'),
+              ),
+              TextField(
+                controller: subjectController,
+                decoration: const InputDecoration(labelText: 'Mata Pelajaran'),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Batal'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Simpan'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (result == true) {
+      final index = tasks.indexOf(task);
+
+      if (index != -1) {
+        setState(() {
+          tasks[index] = TaskItem(
+            title: titleController.text.trim(),
+            subject: subjectController.text.trim(),
+            dueDate: task.dueDate,
+            completed: task.completed,
+          );
+        });
+      }
+    }
+    titleController.dispose();
+    subjectController.dispose();
+  }
+
   Widget buildTaskList({bool showCompleted = false}) {
     final visibleTasks = tasks
         .where((task) => showCompleted ? task.completed : !task.completed)
@@ -160,6 +215,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             setState(() => task.completed = value ?? false);
           },
           onDelete: () => deleteTask(task),
+          onEdit: () => editTask(task),
         );
       },
     );
@@ -227,6 +283,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   setState(() => task.completed = value ?? false);
                 },
                 onDelete: () => deleteTask(task),
+                onEdit: () => editTask(task),
               ),
             ),
         if (pendingCount == 0) const Text('Semua tugas sudah selesai. Hebat!'),
