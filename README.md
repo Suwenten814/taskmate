@@ -189,8 +189,7 @@ Untuk memastikan Flutter sudah terpasang dengan benar, jalankan:
 flutter doctor
 ```
 
-## 📦 Download APK
-
+## 📦 Download APK ( https://drive.google.com/file/d/1ZvxDoF1A5H5HSTY9KIdDMoO9inGL1kgm/view?usp=drive_link )
 Aplikasi TaskMate dapat diunduh dan dicoba melalui tautan berikut:
 
 [**Download TaskMate APK**](https://drive.google.com/file/d/1ZvxDoF1A5H5HSTY9KIdDMoO9inGL1kgm/view?usp=drive_link)
