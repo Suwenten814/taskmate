@@ -193,7 +193,7 @@ flutter doctor
 
 Aplikasi TaskMate dapat diunduh dan dicoba melalui tautan berikut:
 
-[**Download TaskMate APK**](GANTI_DENGAN_LINK_APK)
+[**Download TaskMate APK**](https://drive.google.com/file/d/1ZvxDoF1A5H5HSTY9KIdDMoO9inGL1kgm/view?usp=drive_link)
 
 > Ganti tautan di atas dengan link APK yang sudah diunggah. Jika APK belum tersedia, bagian ini dapat dilengkapi setelah proses build selesai.
 
