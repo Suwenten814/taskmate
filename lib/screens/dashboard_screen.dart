@@ -584,43 +584,122 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   // Beranda
+
   Widget buildHome(List<SupabaseTask> tasks) {
     final completedCount = getCompletedCount(tasks);
     final pendingCount = tasks.length - completedCount;
+    final pendingTasks = tasks
+        .where((task) => !task.completed)
+        .take(3)
+        .toList();
 
     return ListView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
       children: [
-        Text(
-          'Halo, Mahasiswa!',
-          style: Theme.of(context).textTheme.headlineMedium,
+        // Header dashboard
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Colors.deepPurple.shade700, Colors.deepPurple.shade400],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(24),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Expanded(
+                    child: Text(
+                      'Halo, Mahasiswa! 👋',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 23,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.18),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: const Icon(
+                      Icons.school_outlined,
+                      color: Colors.white,
+                      size: 26,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              const Text(
+                'Atur tugasmu, capai targetmu.',
+                style: TextStyle(color: Colors.white, fontSize: 14),
+              ),
+              const SizedBox(height: 20),
+
+              // Progres penyelesaian
+              ClipRRect(
+                borderRadius: BorderRadius.circular(20),
+                child: LinearProgressIndicator(
+                  value: tasks.isEmpty ? 0 : completedCount / tasks.length,
+                  minHeight: 8,
+                  backgroundColor: Colors.white.withValues(alpha: 0.25),
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                tasks.isEmpty
+                    ? 'Belum ada tugas'
+                    : '$completedCount dari ${tasks.length} tugas telah selesai',
+                style: const TextStyle(color: Colors.white, fontSize: 12),
+              ),
+            ],
+          ),
         ),
-        const SizedBox(height: 6),
-        const Text('Atur tugasmu, capai targetmu.'),
-        const SizedBox(height: 20),
+
+        const SizedBox(height: 24),
+
+        // Judul ringkasan
+        Text(
+          'Ringkasan Tugas',
+          style: Theme.of(context).textTheme.titleLarge
+              ?.copyWith(fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 12),
+
+        // Kartu statistik
         LayoutBuilder(
           builder: (context, constraints) {
-            final columns = constraints.maxWidth >= 600 ? 3 : 2;
+            final columns = constraints.maxWidth >= 460 ? 3 : 2;
 
             return GridView.count(
               crossAxisCount: columns,
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              childAspectRatio: 1.35,
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 12,
+              childAspectRatio: columns == 3 ? 0.95 : 1.25,
               children: [
-                SummaryCard(
+                _dashboardSummaryCard(
                   title: 'Semua Tugas',
                   value: '${tasks.length}',
                   icon: Icons.assignment_outlined,
                   color: Colors.deepPurple,
                 ),
-                SummaryCard(
+                _dashboardSummaryCard(
                   title: 'Belum Selesai',
                   value: '$pendingCount',
-                  icon: Icons.pending_actions,
+                  icon: Icons.pending_actions_outlined,
                   color: Colors.orange,
                 ),
-                SummaryCard(
+                _dashboardSummaryCard(
                   title: 'Selesai',
                   value: '$completedCount',
                   icon: Icons.check_circle_outline,
@@ -630,25 +709,158 @@ class _DashboardScreenState extends State<DashboardScreen> {
             );
           },
         ),
-        const SizedBox(height: 20),
-        Text(
-          'Tugas yang belum selesai',
-          style: Theme.of(context).textTheme.titleLarge,
+
+        const SizedBox(height: 28),
+
+        // Bagian tugas belum selesai
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                'Tugas yang belum selesai',
+                style: Theme.of(context).textTheme.titleLarge
+                    ?.copyWith(fontWeight: FontWeight.bold),
+              ),
+            ),
+            if (pendingCount > 0)
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.orange.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  '$pendingCount tugas',
+                  style: const TextStyle(
+                    color: Colors.deepOrange,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+          ],
         ),
-        const SizedBox(height: 12),
-        ...tasks
-            .where((task) => !task.completed)
-            .take(3)
-            .map(
-              (task) => TaskCard(
+
+        const SizedBox(height: 14),
+
+        // Daftar tugas atau empty state
+        if (pendingTasks.isEmpty)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 28),
+            decoration: BoxDecoration(
+              color: Colors.green.withValues(alpha: 0.07),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: Colors.green.withValues(alpha: 0.15)),
+            ),
+            child: Column(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.green.withValues(alpha: 0.12),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.celebration_outlined,
+                    color: Colors.green,
+                    size: 36,
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Text(
+                  tasks.isEmpty
+                      ? 'Belum ada tugas'
+                      : 'Semua tugas sudah selesai!',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  tasks.isEmpty
+                      ? 'Tambahkan tugas kuliahmu agar lebih terorganisir.'
+                      : 'Hebat! Kamu sudah menyelesaikan semua tugas.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+                ),
+              ],
+            ),
+          )
+        else
+          ...pendingTasks.map(
+            (task) => Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: TaskCard(
                 task: task,
                 onChanged: (value) => toggleTask(task, value),
                 onDelete: () => deleteTask(task),
                 onEdit: () => editTask(task),
               ),
             ),
-        if (pendingCount == 0) const Text('Semua tugas sudah selesai. Hebat!'),
+          ),
+
+        if (pendingCount > 3)
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Text(
+              'Dan ${pendingCount - 3} tugas lainnya. '
+              'Buka menu Daftar Tugas untuk melihat semuanya.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+            ),
+          ),
       ],
+    );
+  }
+
+  // Kartu ringkasan dashboard
+  Widget _dashboardSummaryCard({
+    required String title,
+    required String value,
+    required IconData icon,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.07),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withValues(alpha: 0.12)),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(11),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.13),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Icon(icon, color: color, size: 26),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            value,
+            style: TextStyle(
+              color: color,
+              fontSize: 26,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            maxLines: 2,
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+          ),
+        ],
+      ),
     );
   }
 
