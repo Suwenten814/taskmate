@@ -14,6 +14,7 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   int selectedIndex = 0;
+  bool showCompletedTasks = false;
 
   @override
   void initState() {
@@ -345,28 +346,240 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   // Daftar tugas
-  Widget buildTaskList(List<SupabaseTask> tasks, {bool showCompleted = false}) {
+
+  // Daftar tugas
+  Widget buildTaskList(List<SupabaseTask> tasks) {
+    final completedCount = getCompletedCount(tasks);
+    final pendingCount = tasks.length - completedCount;
+
     final visibleTasks = tasks
-        .where((task) => showCompleted ? task.completed : !task.completed)
+        .where((task) => showCompletedTasks ? task.completed : !task.completed)
         .toList();
 
-    if (visibleTasks.isEmpty) {
-      return const Center(child: Text('Belum ada tugas di sini.'));
-    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Header halaman tugas
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Daftar Tugas',
+                style: Theme.of(context).textTheme.headlineSmall
+                    ?.copyWith(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                '$pendingCount tugas menunggu diselesaikan',
+                style: Theme.of(context).textTheme.bodyMedium
+                    ?.copyWith(color: Colors.grey[600]),
+              ),
+              const SizedBox(height: 20),
 
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: visibleTasks.length,
-      itemBuilder: (context, index) {
-        final task = visibleTasks[index];
+              // Ringkasan tugas
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.deepPurple.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(18),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.deepPurple,
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: const Icon(
+                        Icons.assignment_turned_in_outlined,
+                        color: Colors.white,
+                        size: 26,
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Total tugas',
+                            style: TextStyle(fontWeight: FontWeight.w500),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '${tasks.length} tugas',
+                            style: Theme.of(context).textTheme.titleLarge
+                                ?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.deepPurple,
+                                ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        const Text('Selesai'),
+                        const SizedBox(height: 4),
+                        Text(
+                          '$completedCount/${tasks.length}',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.green,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
 
-        return TaskCard(
-          task: task,
-          onChanged: (value) => toggleTask(task, value),
-          onDelete: () => deleteTask(task),
-          onEdit: () => editTask(task),
-        );
-      },
+              const SizedBox(height: 20),
+
+              // Filter tugas
+              Row(
+                children: [
+                  Expanded(
+                    child: _taskFilterChip(
+                      label: 'Belum Selesai',
+                      count: pendingCount,
+                      selected: !showCompletedTasks,
+                      onSelected: () {
+                        setState(() {
+                          showCompletedTasks = false;
+                        });
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _taskFilterChip(
+                      label: 'Selesai',
+                      count: completedCount,
+                      selected: showCompletedTasks,
+                      onSelected: () {
+                        setState(() {
+                          showCompletedTasks = true;
+                        });
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+
+        // Daftar kartu tugas
+        Expanded(
+          child: visibleTasks.isEmpty
+              ? Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          showCompletedTasks
+                              ? Icons.task_alt
+                              : Icons.assignment_outlined,
+                          size: 64,
+                          color: Colors.deepPurple.withValues(alpha: 0.45),
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          showCompletedTasks
+                              ? 'Belum ada tugas yang selesai'
+                              : 'Semua tugas sudah beres!',
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          showCompletedTasks
+                              ? 'Tugas yang kamu selesaikan akan muncul di sini.'
+                              : 'Tambahkan tugas baru untuk mulai mengatur aktivitasmu.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: Colors.grey[600]),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              : ListView.builder(
+                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+                  itemCount: visibleTasks.length,
+                  itemBuilder: (context, index) {
+                    final task = visibleTasks[index];
+
+                    return TaskCard(
+                      task: task,
+                      onChanged: (value) => toggleTask(task, value),
+                      onDelete: () => deleteTask(task),
+                      onEdit: () => editTask(task),
+                    );
+                  },
+                ),
+        ),
+      ],
+    );
+  }
+
+  // Tombol filter tugas
+  Widget _taskFilterChip({
+    required String label,
+    required int count,
+    required bool selected,
+    required VoidCallback onSelected,
+  }) {
+    return Material(
+      color: selected ? Colors.deepPurple : Colors.grey.withValues(alpha: 0.08),
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        onTap: onSelected,
+        borderRadius: BorderRadius.circular(14),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Flexible(
+                child: Text(
+                  label,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: selected ? Colors.white : Colors.black87,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                decoration: BoxDecoration(
+                  color: selected
+                      ? Colors.white.withValues(alpha: 0.2)
+                      : Colors.deepPurple.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  '$count',
+                  style: TextStyle(
+                    color: selected ? Colors.white : Colors.deepPurple,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
