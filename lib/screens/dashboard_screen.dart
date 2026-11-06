@@ -865,32 +865,272 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   // Progres
+
   Widget buildProgress(List<SupabaseTask> tasks) {
     final completedCount = getCompletedCount(tasks);
-
+    final pendingCount = tasks.length - completedCount;
     final percentage = tasks.isEmpty
         ? 0
         : (completedCount * 100 / tasks.length).round();
 
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.insights, size: 64, color: Colors.deepPurple),
-            const SizedBox(height: 16),
-            Text(
-              '$percentage%',
-              style: Theme.of(context).textTheme.displayMedium,
+    final progressValue = tasks.isEmpty ? 0.0 : completedCount / tasks.length;
+
+    return ListView(
+      padding: const EdgeInsets.all(20),
+      children: [
+        // Header
+        Text(
+          'Progres Tugas',
+          style: Theme.of(context).textTheme.headlineSmall
+              ?.copyWith(fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          'Pantau pencapaian tugas kuliahmu.',
+          style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
+        ),
+
+        const SizedBox(height: 24),
+
+        // Kartu progres utama
+        Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Colors.deepPurple.shade700, Colors.deepPurple.shade400],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
-            const Text('Progres penyelesaian tugas'),
-            const SizedBox(height: 12),
-            LinearProgressIndicator(
-              value: tasks.isEmpty ? 0 : completedCount / tasks.length,
+            borderRadius: BorderRadius.circular(28),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.deepPurple.withValues(alpha: 0.18),
+                blurRadius: 18,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Column(
+            children: [
+              const Text(
+                'Penyelesaian Tugas',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // Lingkaran progres
+              SizedBox(
+                width: 180,
+                height: 180,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    SizedBox(
+                      width: 180,
+                      height: 180,
+                      child: CircularProgressIndicator(
+                        value: progressValue,
+                        strokeWidth: 13,
+                        backgroundColor: Colors.white.withValues(alpha: 0.20),
+                        valueColor: const AlwaysStoppedAnimation<Color>(
+                          Colors.white,
+                        ),
+                        strokeCap: StrokeCap.round,
+                      ),
+                    ),
+                    Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          '$percentage%',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 42,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const Text(
+                          'Selesai',
+                          style: TextStyle(color: Colors.white70, fontSize: 14),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 24),
+
+              Text(
+                tasks.isEmpty
+                    ? 'Belum ada tugas yang tercatat.'
+                    : '$completedCount dari ${tasks.length} tugas telah selesai',
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: Colors.white, fontSize: 14),
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 24),
+
+        // Statistik
+        Text(
+          'Ringkasan Tugas',
+          style: Theme.of(context).textTheme.titleLarge
+              ?.copyWith(fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 12),
+
+        Row(
+          children: [
+            Expanded(
+              child: _progressStatCard(
+                title: 'Total Tugas',
+                count: tasks.length,
+                icon: Icons.assignment_outlined,
+                color: Colors.deepPurple,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _progressStatCard(
+                title: 'Belum Selesai',
+                count: pendingCount,
+                icon: Icons.pending_actions_outlined,
+                color: Colors.orange,
+              ),
             ),
           ],
         ),
+
+        const SizedBox(height: 12),
+
+        _progressStatCard(
+          title: 'Tugas Selesai',
+          count: completedCount,
+          icon: Icons.check_circle_outline,
+          color: Colors.green,
+        ),
+
+        const SizedBox(height: 24),
+
+        // Status pencapaian
+        Container(
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            color: Colors.deepPurple.withValues(alpha: 0.06),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: Colors.deepPurple.withValues(alpha: 0.10),
+            ),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.deepPurple.withValues(alpha: 0.12),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  tasks.isNotEmpty && pendingCount == 0
+                      ? Icons.emoji_events_outlined
+                      : Icons.flag_outlined,
+                  color: Colors.deepPurple,
+                  size: 28,
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      tasks.isEmpty
+                          ? 'Mulai perjalananmu!'
+                          : pendingCount == 0
+                          ? 'Luar biasa!'
+                          : 'Terus semangat!',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      tasks.isEmpty
+                          ? 'Tambahkan tugas pertamamu.'
+                          : pendingCount == 0
+                          ? 'Semua tugas berhasil diselesaikan.'
+                          : 'Masih ada $pendingCount tugas yang perlu diselesaikan.',
+                      style: TextStyle(
+                        color: Colors.grey.shade700,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  // Kartu statistik pada halaman progres
+  Widget _progressStatCard({
+    required String title,
+    required int count,
+    required IconData icon,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.07),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withValues(alpha: 0.12)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.13),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Icon(icon, color: color, size: 24),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '$count',
+                  style: TextStyle(
+                    color: color,
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
