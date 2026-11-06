@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
-import '../models/task_item.dart';
+import '../models/supabase_task.dart';
+import '../providers/supabase_task_provider.dart';
 import '../widgets/task_widgets.dart';
-import '../services/task_storage.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -14,187 +15,337 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   int selectedIndex = 0;
 
-  final List<TaskItem> tasks = [
-    TaskItem(
-      title: 'Membuat UI aplikasi',
-      subject: 'Pemrograman Mobile',
-      dueDate: 'Besok',
-    ),
-    TaskItem(
-      title: 'Mengerjakan laporan',
-      subject: 'Rekayasa Perangkat Lunak',
-      dueDate: '30 Okt',
-    ),
-    TaskItem(
-      title: 'Belajar Dart',
-      subject: 'Pemrograman Mobile',
-      dueDate: '1 Nov',
-      completed: true,
-    ),
-  ];
+  @override
+  void initState() {
+    super.initState();
 
-  int get completedCount => tasks.where((task) => task.completed).length;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      context.read<SupabaseTaskProvider>().fetchTasks();
+    });
+  }
 
+  int getCompletedCount(List<SupabaseTask> tasks) {
+    return tasks.where((task) => task.completed).length;
+  }
+
+  String formatDate(DateTime date) {
+    return '${date.year.toString().padLeft(4, '0')}-'
+        '${date.month.toString().padLeft(2, '0')}-'
+        '${date.day.toString().padLeft(2, '0')}';
+  }
+
+  void showMessage(String message) {
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  Future<String?> chooseDate(
+    BuildContext dialogContext,
+    String? currentDate,
+  ) async {
+    final initialDate = DateTime.tryParse(currentDate ?? '') ?? DateTime.now();
+
+    final selectedDate = await showDatePicker(
+      context: dialogContext,
+      initialDate: initialDate,
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2035),
+    );
+
+    if (selectedDate == null) return null;
+
+    return formatDate(selectedDate);
+  }
+
+  Widget dateField({
+    required BuildContext dialogContext,
+    required TextEditingController controller,
+    required VoidCallback onTap,
+  }) {
+    return TextField(
+      controller: controller,
+      readOnly: true,
+      onTap: onTap,
+      decoration: const InputDecoration(
+        labelText: 'Tanggal tenggat',
+        hintText: 'Pilih tanggal',
+        border: OutlineInputBorder(),
+        suffixIcon: Icon(Icons.calendar_month),
+      ),
+    );
+  }
+
+  // Tambah tugas
   Future<void> addTask() async {
     final titleController = TextEditingController();
     final subjectController = TextEditingController();
+    final dateController = TextEditingController();
+
+    String? validationMessage;
 
     final result = await showDialog<bool>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Tambah Tugas'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: titleController,
-                autofocus: true,
-                decoration: const InputDecoration(
-                  labelText: 'Nama tugas',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: subjectController,
-                decoration: const InputDecoration(
-                  labelText: 'Mata kuliah',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Batal'),
-          ),
-          FilledButton(
-            onPressed: () {
-              if (titleController.text.trim().isEmpty ||
-                  subjectController.text.trim().isEmpty) {
-                ScaffoldMessenger.of(dialogContext).showSnackBar(
-                  const SnackBar(
-                    content: Text('Nama tugas dan mata kuliah wajib diisi.'),
-                  ),
-                );
-                return;
-              }
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text('Tambah Tugas'),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: titleController,
+                      autofocus: true,
+                      decoration: const InputDecoration(
+                        labelText: 'Nama tugas',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: subjectController,
+                      decoration: const InputDecoration(
+                        labelText: 'Mata kuliah',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    dateField(
+                      dialogContext: dialogContext,
+                      controller: dateController,
+                      onTap: () async {
+                        final date = await chooseDate(
+                          dialogContext,
+                          dateController.text,
+                        );
 
-              Navigator.pop(dialogContext, true);
-            },
-            child: const Text('Simpan'),
-          ),
-        ],
-      ),
+                        if (date != null) {
+                          setDialogState(() {
+                            dateController.text = date;
+                          });
+                        }
+                      },
+                    ),
+                    if (validationMessage != null) ...[
+                      const SizedBox(height: 12),
+                      Text(
+                        validationMessage!,
+                        style: const TextStyle(color: Colors.red),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext, false),
+                  child: const Text('Batal'),
+                ),
+                FilledButton(
+                  onPressed: () {
+                    if (titleController.text.trim().isEmpty ||
+                        subjectController.text.trim().isEmpty ||
+                        dateController.text.trim().isEmpty) {
+                      setDialogState(() {
+                        validationMessage = 'Semua kolom wajib diisi.';
+                      });
+                      return;
+                    }
+
+                    Navigator.pop(dialogContext, true);
+                  },
+                  child: const Text('Simpan'),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
 
     if (result == true && mounted) {
-      setState(() {
-        tasks.insert(
-          0,
-          TaskItem(
-            title: titleController.text.trim(),
-            subject: subjectController.text.trim(),
-            dueDate: 'Belum ditentukan',
-          ),
-        );
-      });
+      final success = await context.read<SupabaseTaskProvider>().addTask(
+        title: titleController.text.trim(),
+        subject: subjectController.text.trim(),
+        dueDate: dateController.text.trim(),
+      );
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Tugas berhasil ditambahkan.')),
+      showMessage(
+        success ? 'Tugas berhasil ditambahkan.' : 'Gagal menambahkan tugas.',
       );
     }
 
     titleController.dispose();
     subjectController.dispose();
+    dateController.dispose();
   }
 
-  Future<void> deleteTask(TaskItem task) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Hapus tugas?'),
-        content: Text('Tugas "${task.title}" akan dihapus.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Batal'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('Hapus'),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed == true && mounted) {
-      setState(() => tasks.remove(task));
-
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Tugas berhasil dihapus.')));
-    }
-  }
-
-  Future<void> editTask(TaskItem task) async {
+  // Edit tugas
+  Future<void> editTask(SupabaseTask task) async {
     final titleController = TextEditingController(text: task.title);
     final subjectController = TextEditingController(text: task.subject);
+    final dateController = TextEditingController(text: task.dueDate);
+
+    String? validationMessage;
 
     final result = await showDialog<bool>(
       context: context,
-      builder: (context) {
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text('Edit Tugas'),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: titleController,
+                      decoration: const InputDecoration(
+                        labelText: 'Nama tugas',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: subjectController,
+                      decoration: const InputDecoration(
+                        labelText: 'Mata kuliah',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    dateField(
+                      dialogContext: dialogContext,
+                      controller: dateController,
+                      onTap: () async {
+                        final date = await chooseDate(
+                          dialogContext,
+                          dateController.text,
+                        );
+
+                        if (date != null) {
+                          setDialogState(() {
+                            dateController.text = date;
+                          });
+                        }
+                      },
+                    ),
+                    if (validationMessage != null) ...[
+                      const SizedBox(height: 12),
+                      Text(
+                        validationMessage!,
+                        style: const TextStyle(color: Colors.red),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext, false),
+                  child: const Text('Batal'),
+                ),
+                FilledButton(
+                  onPressed: () {
+                    if (titleController.text.trim().isEmpty ||
+                        subjectController.text.trim().isEmpty ||
+                        dateController.text.trim().isEmpty) {
+                      setDialogState(() {
+                        validationMessage = 'Semua kolom wajib diisi.';
+                      });
+                      return;
+                    }
+
+                    Navigator.pop(dialogContext, true);
+                  },
+                  child: const Text('Simpan'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    if (result == true && mounted) {
+      final success = await context.read<SupabaseTaskProvider>().updateTask(
+        id: task.id,
+        title: titleController.text.trim(),
+        subject: subjectController.text.trim(),
+        dueDate: dateController.text.trim(),
+        completed: task.completed,
+      );
+
+      showMessage(
+        success ? 'Tugas berhasil diperbarui.' : 'Gagal memperbarui tugas.',
+      );
+    }
+
+    titleController.dispose();
+    subjectController.dispose();
+    dateController.dispose();
+  }
+
+  // Hapus tugas
+  Future<void> deleteTask(SupabaseTask task) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
         return AlertDialog(
-          title: const Text('Edit Tugas'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: titleController,
-                decoration: const InputDecoration(labelText: 'Nama Tugas'),
-              ),
-              TextField(
-                controller: subjectController,
-                decoration: const InputDecoration(labelText: 'Mata Pelajaran'),
-              ),
-            ],
-          ),
+          title: const Text('Hapus tugas?'),
+          content: Text('Tugas "${task.title}" akan dihapus.'),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context, false),
+              onPressed: () => Navigator.pop(dialogContext, false),
               child: const Text('Batal'),
             ),
-            ElevatedButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text('Simpan'),
+            FilledButton(
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: const Text('Hapus'),
             ),
           ],
         );
       },
     );
 
-    if (result == true) {
-      final index = tasks.indexOf(task);
+    if (confirmed == true && mounted) {
+      final success = await context.read<SupabaseTaskProvider>().deleteTask(
+        task.id,
+      );
 
-      if (index != -1) {
-        setState(() {
-          tasks[index] = TaskItem(
-            title: titleController.text.trim(),
-            subject: subjectController.text.trim(),
-            dueDate: task.dueDate,
-            completed: task.completed,
-          );
-        });
-      }
+      showMessage(
+        success ? 'Tugas berhasil dihapus.' : 'Gagal menghapus tugas.',
+      );
     }
-    titleController.dispose();
-    subjectController.dispose();
   }
 
-  Widget buildTaskList({bool showCompleted = false}) {
+  // Checklist selesai
+  Future<void> toggleTask(SupabaseTask task, bool? value) async {
+    final success = await context.read<SupabaseTaskProvider>().updateTask(
+      id: task.id,
+      title: task.title,
+      subject: task.subject,
+      dueDate: task.dueDate,
+      completed: value ?? false,
+    );
+
+    showMessage(
+      success
+          ? (value == true
+                ? 'Tugas ditandai selesai.'
+                : 'Tugas ditandai belum selesai.')
+          : 'Gagal mengubah status tugas.',
+    );
+  }
+
+  // Daftar tugas
+  Widget buildTaskList(List<SupabaseTask> tasks, {bool showCompleted = false}) {
     final visibleTasks = tasks
         .where((task) => showCompleted ? task.completed : !task.completed)
         .toList();
@@ -211,9 +362,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
         return TaskCard(
           task: task,
-          onChanged: (value) {
-            setState(() => task.completed = value ?? false);
-          },
+          onChanged: (value) => toggleTask(task, value),
           onDelete: () => deleteTask(task),
           onEdit: () => editTask(task),
         );
@@ -221,7 +370,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget buildHome() {
+  // Beranda
+  Widget buildHome(List<SupabaseTask> tasks) {
+    final completedCount = getCompletedCount(tasks);
     final pendingCount = tasks.length - completedCount;
 
     return ListView(
@@ -237,33 +388,32 @@ class _DashboardScreenState extends State<DashboardScreen> {
         LayoutBuilder(
           builder: (context, constraints) {
             final columns = constraints.maxWidth >= 600 ? 3 : 2;
-            final cards = [
-              SummaryCard(
-                title: 'Semua Tugas',
-                value: '${tasks.length}',
-                icon: Icons.assignment_outlined,
-                color: Colors.deepPurple,
-              ),
-              SummaryCard(
-                title: 'Belum Selesai',
-                value: '$pendingCount',
-                icon: Icons.pending_actions,
-                color: Colors.orange,
-              ),
-              SummaryCard(
-                title: 'Selesai',
-                value: '$completedCount',
-                icon: Icons.check_circle_outline,
-                color: Colors.green,
-              ),
-            ];
 
             return GridView.count(
               crossAxisCount: columns,
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               childAspectRatio: 1.35,
-              children: cards,
+              children: [
+                SummaryCard(
+                  title: 'Semua Tugas',
+                  value: '${tasks.length}',
+                  icon: Icons.assignment_outlined,
+                  color: Colors.deepPurple,
+                ),
+                SummaryCard(
+                  title: 'Belum Selesai',
+                  value: '$pendingCount',
+                  icon: Icons.pending_actions,
+                  color: Colors.orange,
+                ),
+                SummaryCard(
+                  title: 'Selesai',
+                  value: '$completedCount',
+                  icon: Icons.check_circle_outline,
+                  color: Colors.green,
+                ),
+              ],
             );
           },
         ),
@@ -279,9 +429,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             .map(
               (task) => TaskCard(
                 task: task,
-                onChanged: (value) {
-                  setState(() => task.completed = value ?? false);
-                },
+                onChanged: (value) => toggleTask(task, value),
                 onDelete: () => deleteTask(task),
                 onEdit: () => editTask(task),
               ),
@@ -291,7 +439,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget buildProgress() {
+  // Progres
+  Widget buildProgress(List<SupabaseTask> tasks) {
+    final completedCount = getCompletedCount(tasks);
+
     final percentage = tasks.isEmpty
         ? 0
         : (completedCount * 100 / tasks.length).round();
@@ -319,6 +470,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
+  // Profil
   Widget buildProfile() {
     return const Center(
       child: Column(
@@ -338,47 +490,92 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final pages = [
-      buildHome(),
-      buildTaskList(),
-      buildProgress(),
-      buildProfile(),
-    ];
+    return Consumer<SupabaseTaskProvider>(
+      builder: (context, provider, child) {
+        final tasks = provider.tasks;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('TaskMate'),
-        actions: [
-          if (selectedIndex == 0 || selectedIndex == 1)
-            IconButton(
-              onPressed: addTask,
-              icon: const Icon(Icons.add),
-              tooltip: 'Tambah tugas',
-            ),
-        ],
-      ),
-      body: SafeArea(
-        child: IndexedStack(index: selectedIndex, children: pages),
-      ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: selectedIndex,
-        onDestinationSelected: (index) {
-          setState(() => selectedIndex = index);
-        },
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.home_outlined),
-            selectedIcon: Icon(Icons.home),
-            label: 'Beranda',
+        final pages = [
+          buildHome(tasks),
+          buildTaskList(tasks),
+          buildProgress(tasks),
+          buildProfile(),
+        ];
+
+        return Scaffold(
+          appBar: AppBar(
+            title: const Text('TaskMate'),
+            actions: [
+              IconButton(
+                onPressed: provider.isLoading
+                    ? null
+                    : () => provider.fetchTasks(),
+                icon: const Icon(Icons.refresh),
+                tooltip: 'Muat ulang tugas',
+              ),
+              if (selectedIndex == 0 || selectedIndex == 1)
+                IconButton(
+                  onPressed: provider.isLoading ? null : addTask,
+                  icon: const Icon(Icons.add),
+                  tooltip: 'Tambah tugas',
+                ),
+            ],
           ),
-          NavigationDestination(icon: Icon(Icons.checklist), label: 'Tugas'),
-          NavigationDestination(icon: Icon(Icons.insights), label: 'Progres'),
-          NavigationDestination(
-            icon: Icon(Icons.person_outline),
-            label: 'Profil',
+          body: SafeArea(
+            child: provider.isLoading && tasks.isEmpty
+                ? const Center(child: CircularProgressIndicator())
+                : provider.errorMessage != null && tasks.isEmpty
+                ? Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.cloud_off, size: 48),
+                          const SizedBox(height: 12),
+                          Text(
+                            provider.errorMessage!,
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 12),
+                          FilledButton(
+                            onPressed: () => provider.fetchTasks(),
+                            child: const Text('Coba lagi'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                : IndexedStack(index: selectedIndex, children: pages),
           ),
-        ],
-      ),
+          bottomNavigationBar: NavigationBar(
+            selectedIndex: selectedIndex,
+            onDestinationSelected: (index) {
+              setState(() {
+                selectedIndex = index;
+              });
+            },
+            destinations: const [
+              NavigationDestination(
+                icon: Icon(Icons.home_outlined),
+                selectedIcon: Icon(Icons.home),
+                label: 'Beranda',
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.checklist),
+                label: 'Tugas',
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.insights),
+                label: 'Progres',
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.person_outline),
+                label: 'Profil',
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

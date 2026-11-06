@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
-import '../models/task_item.dart';
+import '../models/supabase_task.dart';
 
 class TaskCard extends StatelessWidget {
-  final TaskItem task;
+  final SupabaseTask task;
   final ValueChanged<bool?> onChanged;
   final VoidCallback onDelete;
   final VoidCallback onEdit;
