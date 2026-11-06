@@ -471,19 +471,209 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   // Profil
-  Widget buildProfile() {
-    return const Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          CircleAvatar(radius: 36, child: Icon(Icons.person, size: 40)),
-          SizedBox(height: 12),
-          Text(
-            'Mahasiswa TaskMate',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+  // Profil
+  Widget buildProfile(List<SupabaseTask> tasks) {
+    final completedCount = getCompletedCount(tasks);
+    final pendingCount = tasks.length - completedCount;
+
+    final percentage = tasks.isEmpty
+        ? 0
+        : (completedCount * 100 / tasks.length).round();
+
+    return ListView(
+      padding: const EdgeInsets.all(20),
+      children: [
+        const SizedBox(height: 20),
+
+        // Header Profil
+        Center(
+          child: Column(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.deepPurple.withValues(alpha: (0.12)),
+                ),
+                child: const CircleAvatar(
+                  radius: 48,
+                  backgroundColor: Colors.deepPurple,
+                  child: Icon(Icons.person, size: 56, color: Colors.white),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Mahasiswa TaskMate',
+                style: Theme.of(context).textTheme.headlineSmall
+                    ?.copyWith(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Aplikasi pengelola tugas kuliah',
+                style: Theme.of(context).textTheme.bodyMedium
+                    ?.copyWith(color: Colors.grey[600]),
+              ),
+            ],
           ),
-          Text('Aplikasi pengelola tugas kuliah'),
-        ],
+        ),
+
+        const SizedBox(height: 32),
+
+        // Statistik Tugas
+        Text(
+          'Statistik Tugas',
+          style: Theme.of(context).textTheme.titleLarge
+              ?.copyWith(fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 12),
+
+        Row(
+          children: [
+            Expanded(
+              child: profileStatCard(
+                title: 'Total Tugas',
+                value: '${tasks.length}',
+                icon: Icons.assignment_outlined,
+                color: Colors.deepPurple,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: profileStatCard(
+                title: 'Selesai',
+                value: '$completedCount',
+                icon: Icons.check_circle_outline,
+                color: Colors.green,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: profileStatCard(
+                title: 'Pending',
+                value: '$pendingCount',
+                icon: Icons.pending_actions,
+                color: Colors.orange,
+              ),
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 24),
+
+        // Progres Penyelesaian
+        Card(
+          elevation: 0,
+          color: Colors.deepPurple.withOpacity(0.06),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.insights, color: Colors.deepPurple),
+                    const SizedBox(width: 8),
+                    const Expanded(
+                      child: Text(
+                        'Progres Penyelesaian',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                    Text(
+                      '$percentage%',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.deepPurple,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                LinearProgressIndicator(
+                  value: tasks.isEmpty ? 0 : completedCount / tasks.length,
+                  minHeight: 8,
+                  borderRadius: BorderRadius.circular(8),
+                  backgroundColor: Colors.deepPurple.withOpacity(0.12),
+                  color: Colors.deepPurple,
+                ),
+              ],
+            ),
+          ),
+        ),
+
+        const SizedBox(height: 24),
+
+        // Informasi Aplikasi
+        Text(
+          'Informasi',
+          style: Theme.of(context).textTheme.titleLarge
+              ?.copyWith(fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 12),
+
+        Card(
+          elevation: 0,
+          child: Column(
+            children: [
+              const ListTile(
+                leading: Icon(Icons.info_outline, color: Colors.deepPurple),
+                title: Text('Tentang TaskMate'),
+                subtitle: Text(
+                  'Aplikasi untuk membantu mahasiswa mengelola tugas kuliah.',
+                ),
+              ),
+              const Divider(height: 1),
+              const ListTile(
+                leading: Icon(Icons.school_outlined, color: Colors.deepPurple),
+                title: Text('Versi Aplikasi'),
+                subtitle: Text('TaskMate v1.0.0'),
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 20),
+
+        Center(
+          child: Text(
+            'Dibuat untuk membantu tugas kuliahmu.',
+            style: Theme.of(context).textTheme.bodySmall
+                ?.copyWith(color: Colors.grey[600]),
+          ),
+        ),
+
+        const SizedBox(height: 20),
+      ],
+    );
+  }
+
+  Widget profileStatCard({
+    required String title,
+    required String value,
+    required IconData icon,
+    required Color color,
+  }) {
+    return Card(
+      elevation: 0,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, color: color, size: 28),
+            const SizedBox(height: 8),
+            Text(
+              value,
+              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 12),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -498,7 +688,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           buildHome(tasks),
           buildTaskList(tasks),
           buildProgress(tasks),
-          buildProfile(),
+          buildProfile(tasks),
         ];
 
         return Scaffold(
