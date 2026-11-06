@@ -64,29 +64,23 @@ Provider menggunakan `ChangeNotifier` untuk mengelola state dan memberi tahu UI 
 
 ## 📱 Screenshot Aplikasi
 
-### Dashboard
+### 1. Dashboard
+![Dashboard TaskMate](branda.png)
 
-![Dashboard TaskMate](c:\Users\Ana Dewi\OneDrive\Pictures\Screenshots\Screenshot 2026-11-07 005848.png)
+### 2. Daftar Tugas
+![Daftar Tugas](daftar%20tugas.png)
 
-### Daftar Tugas
+### 3. Detail Tugas
+![Detail Tugas](detail%20tugas.png)
 
-![Daftar Tugas](c:\Users\Ana Dewi\OneDrive\Pictures\Screenshots\Screenshot 2026-11-07 010019.png)
+### 4. Tambah Tugas
+![Tambah Tugas](tambah%20tugas.png)
 
-### Tambah Tugas
+### 5. Progres
+![Progres Tugas](progres.png)
 
-![Tambah Tugas](c:\Users\Ana Dewi\OneDrive\Pictures\Screenshots\Screenshot 2026-11-07 010044.png)
-
-### Edit Tugas
-
-![Edit Tugas](c:\Users\Ana Dewi\OneDrive\Pictures\Screenshots\Screenshot 2026-11-07 010356.png)
-
-### Progres Tugas
-
-![Progres Tugas](c:\Users\Ana Dewi\OneDrive\Pictures\Screenshots\Screenshot 2026-11-07 010429.png)
-
-### Profil
-
-![Profil](c:\Users\Ana Dewi\OneDrive\Pictures\Screenshots\Screenshot 2026-11-07 010509.png)
+### 6. Profil
+![Profil Pengguna](profil.png)
 
 ## 📂 Struktur Folder
 
