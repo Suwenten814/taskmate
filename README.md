@@ -1,66 +1,46 @@
-# TaskMate – Aplikasi Manajemen Tugas Mahasiswa
+# 📚 TaskMate — Aplikasi Pengelola Tugas Mahasiswa
 
 TaskMate adalah aplikasi mobile berbasis Flutter yang dirancang untuk membantu mahasiswa mengelola tugas kuliah, memantau tenggat waktu, dan melihat progres penyelesaian tugas.
 
-## Tujuan Aplikasi
+Aplikasi ini dikembangkan sebagai proyek Ujian Tengah Semester (UTS).
 
-Membantu mahasiswa mengatur tugas perkuliahan agar lebih terstruktur dan mudah dipantau.
+## ✨ Fitur Utama
 
-## Fitur Aplikasi
+- **Dashboard:** Menampilkan ringkasan semua tugas, tugas yang belum selesai, dan tugas yang sudah selesai.
+- **Manajemen Tugas:** Menambahkan, melihat, mengedit, dan menghapus tugas.
+- **Checklist Tugas:** Mengubah status tugas menjadi selesai atau belum selesai.
+- **Tanggal Tenggat:** Memilih tanggal tenggat tugas menggunakan date picker.
+- **Detail Tugas:** Melihat informasi tugas secara lebih lengkap.
+- **Progres Tugas:** Menampilkan persentase penyelesaian tugas.
+- **REST API:** Mengambil data tugas dari API dan menampilkan loading, error, empty state, serta fitur retry.
+- **Supabase:** Menyimpan dan mengelola data tugas menggunakan operasi CRUD.
+- **Validasi Form:** Memastikan kolom wajib diisi sebelum tugas disimpan.
+- **Responsive UI:** Menyesuaikan tampilan berdasarkan lebar layar.
+- **Feedback Pengguna:** Menampilkan SnackBar untuk hasil operasi.
 
-- Dashboard ringkasan tugas.
-- Menampilkan daftar tugas kuliah.
-- Menambahkan tugas baru.
-- Menandai tugas sebagai selesai.
-- Menghapus tugas dengan konfirmasi.
-- Melihat progres penyelesaian tugas.
-- Navigasi antarhalaman.
-
-## Teknologi yang Digunakan
+## 🛠️ Teknologi
 
 - Flutter
 - Dart
-- Visual Studio Code
-- Android Emulator
-- Git dan GitHub
+- Provider
+- ChangeNotifier
+- REST API
+- Supabase
+- JSON
 
-## Struktur Folder
+## 🏗️ Arsitektur Aplikasi
+
+TaskMate menggunakan pemisahan tanggung jawab agar kode lebih mudah dikelola.
+
+Alur pengambilan dan pengelolaan data:
 
 ```text
-lib/
-├── main.dart
-├── models/
-│   └── task_item.dart
-├── screens/
-│   └── dashboard_screen.dart
-└── widgets/
-    └── task_widgets.dart
-```
-
-## Cara Menjalankan Aplikasi
-
-1. Clone repository:
-
-   `git clone https://github.com/Suwenten814/taskmate.git`
-
-2. Masuk ke folder proyek:
-
-   `cd taskmate`
-
-3. Instal dependencies:
-
-   `flutter pub get`
-
-4. Jalankan aplikasi:
-
-   `flutter run`
-
-## Repository GitHub
-
-https://github.com/Suwenten814/taskmate
-
-## Status Pengembangan
-
-Proyek ini dikembangkan secara bertahap sebagai bagian dari tugas Ujian Tengah Semester Pemrograman Mobile.
-
-Fitur dan struktur aplikasi akan terus dikembangkan sesuai kebutuhan tugas.
+UI / Screen
+    ↓
+Provider
+    ↓
+Repository (untuk REST API)
+    ↓
+Service
+    ↓
+REST API / Supabase
