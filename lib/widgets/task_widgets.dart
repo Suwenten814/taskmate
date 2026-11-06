@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../models/supabase_task.dart';
+import '../screens/task_detail_screen.dart';
 
 class TaskCard extends StatelessWidget {
   final SupabaseTask task;
@@ -21,7 +22,19 @@ class TaskCard extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: ListTile(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) {
+                return TaskDetailScreen(task: task);
+              },
+            ),
+          );
+        },
+
         leading: Checkbox(value: task.completed, onChanged: onChanged),
+
         title: Text(
           task.title,
           style: TextStyle(
@@ -31,8 +44,11 @@ class TaskCard extends StatelessWidget {
                 : TextDecoration.none,
           ),
         ),
+
         subtitle: Text('${task.subject}\nTenggat: ${task.dueDate}'),
+
         isThreeLine: true,
+
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
